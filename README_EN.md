@@ -1,6 +1,6 @@
 # RWKV Inference Performance Testing Guide
 
-**Language / 语言:** [🇨🇳 中文](./README.md) | 🇺🇸 English
+**Language / 语言:** [🇨🇳 中文](./readme.md) | 🇺🇸 English
 
 This guide will help you quickly set up and test the inference performance of RWKV models, providing two different testing approaches.
 
