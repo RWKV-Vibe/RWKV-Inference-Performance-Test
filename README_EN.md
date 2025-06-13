@@ -14,7 +14,7 @@ This guide will help you quickly set up and test the inference performance of RW
 - [Test 2: RWKVpip Interactive Testing](#🐍-test-2-rwkvpip-interactive-testing)
   - [Environment Setup](#📋-environment-setup)
   - [Configuration and Execution](#⚙️-configuration-and-execution)
-- [Important Notes](#⚠️-important-notes)
+
 
 ## 🚀 Prerequisites
 
@@ -86,6 +86,12 @@ NF4 quantization provides more aggressive compression options:
 ./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st" --quant-nf4 31
 ```
 
+### ⚠️ Important Notes
+
+- **Path Format**: Model paths in commands must retain quotation marks
+- **Quantization Limits**: Number of quantization layers cannot exceed the actual layers of the model
+- **File Paths**: Please adjust path parameters according to the actual model file location
+
 ### 📊 Understanding Test Results
 
 After testing is complete, you will see a performance report containing the following information:
@@ -151,10 +157,8 @@ python API_DEMO_CHAT.py
 
 Once the program starts, you can test the model's response speed and quality through the interactive chat interface.
 
-## ⚠️ Important Notes
+### ⚠️ Important Notes
 
-- **Path Format**: Model paths in commands must retain quotation marks
-- **Quantization Limits**: Number of quantization layers cannot exceed the actual layers of the model
 - **File Paths**: Please adjust path parameters according to the actual model file location
 - **GPU Support**: Test 2 requires CUDA support for optimal performance
 - **Model Formats**: The two methods support different model formats (`.st` vs `.pth`)
