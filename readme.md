@@ -156,3 +156,17 @@ python API_DEMO_CHAT.py
 - **文件路径**: 请根据实际的模型文件位置调整路径参数
 - **GPU 支持**: 方法二需要 CUDA 支持以获得最佳性能
 - **模型格式**: 两种方法支持不同的模型格式（`.st` vs `.pth`）
+
+## 🙏 致谢
+
+感谢以下开发者和项目为本指南提供的支持：
+
+- [@BlinkDL](https://github.com/BlinkDL) - RWKV 架构的创建者
+- [@cryscan](https://github.com/cryscan) - [web-rwkv](https://github.com/cryscan/web-rwkv) 项目的开发者
+- [@shoumenchougou](https://github.com/shoumenchougou) - 提供了预训练模型资源
+
+特别感谢 RWKV 开源社区的所有贡献者，让这个优秀的语言模型架构得以不断发展和完善。
+
+---
+
+*本指南持续更新中，如有问题或建议，欢迎提交 Issue 或 Pull Request。*
