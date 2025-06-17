@@ -1,175 +1,145 @@
-# RWKV 推理性能测试指南
+<div align="center">
 
-**Language / 语言:** 🇨🇳 中文 | [🇺🇸 English](./README_EN.md)
+<h1> RWKV 推理性能测试指南 </h1>
 
-本指南将帮助您快速设置和测试 RWKV 模型的推理性能，提供两种不同的测试。
+[![中文](https://img.shields.io/badge/Language-中文-orange.svg)](./README.md)
+[![English](https://img.shields.io/badge/Language-English-blue.svg)](./README_EN.md)
 
-## 📋 目录
+</div>
 
-- [准备工作](#准备工作)
-- [测试一：web-rwkv 性能基准测试](#🔧-测试一web-rwkv-性能基准测试)
-  - [安装步骤](#📦-安装步骤)
-  - [性能测试](#⚡-性能测试)
-  - [测试结果解读](#📊-测试结果解读)
-- [测试二：RWKVpip 交互式测试](#🐍-测试二rwkvpip-交互式测试)
-  - [环境准备](#📋-环境准备)
-  - [配置与运行](#⚙️-配置与运行)
+本指南将帮助您在本地设备上配置并测试 RWKV 模型的推理性能，我们也欢迎您提交 issue 报告 RWKV 推理性能数据。
 
-## 🚀 准备工作
+我们提供了基于三种不同推理工具的测试方法：[web-rwkv 测试](#web-rwkv) | [RWKV pip 测试](#rwkv-pip) | [llama.cpp 测试](#llamacpp)。
 
-在开始之前，请确保：
+|测试方法|需要的模型格式|支持的显卡类型|
+|---|---|---|
+|web-rwkv|`.st`|支持 vulkan 的所有显卡，包括核显|
+|RWKV pip|`.pth`|支持 CUDA 的 NVIDIA 显卡，虽然有 CPU 模式，但不建议测试|
+|llama.cpp|`.gguf` | 所有类型的显卡，包括核显和 CPU |
+
+
+在开始之前，请确保您具备以下条件：
 
 - 系统具备足够的存储空间用于下载模型文件
 - 具备基本的命令行操作能力
 - 已安装 Python 环境（测试二需要）
 
-## 🔧 测试一：web-rwkv 性能基准测试
+## web-rwkv
 
-### 📦 安装步骤
+### 测试准备
 
-#### 1. 下载 web-rwkv 工具
+1. 下载 web-rwkv 工具：访问 [web-rwkv releases](https://github.com/cryscan/web-rwkv/releases) 页面，下载适合您操作系统的最新版本压缩包，在一个空白目录中解压
+2. 获取 RWKV7-G1 2.9B 模型：[点击下载](https://huggingface.co/shoumenchougou/RWKV-ST-model/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.st?download=true) `rwkv7-g1-2.9b-20250519-ctx4096.st` RWKV 模型文件，用于性能测试
+3. 将下载的模型文件移动到 web-rwkv 解压目录下的 `dist` 文件夹中
 
-访问 [web-rwkv releases](https://github.com/cryscan/web-rwkv/releases) 页面，下载适合您操作系统的最新版本压缩包。
+### 推理性能测试
 
-![web-rwkv-releases](./img/web-rwkv-releases.png)
+在 `web-rwkv/dist` 目录下，右键选择"在集成终端中打开"。然后分别执行入以下指令，进行不同量化精度的测试：
 
-下载完成后，将压缩包解压到您选择的目录中。
-
-#### 2. 获取 RWKV 模型
-
-前往 [RWKV-ST-model](https://huggingface.co/shoumenchougou/RWKV-ST-model/tree/main) 仓库，下载所需的 `.st` 格式 RWKV 模型文件。
-
-![RWKV-ST-model](./img/RWKV-ST-model.png)
-
-#### 3. 配置模型路径
-
-将下载的模型文件移动到 web-rwkv 解压目录下的 `dist` 文件夹中：
-
-![move2path](./img/move2path.png)
-
-### ⚡ 性能测试
-
-#### 打开终端
-
-首先在解压后的文件夹的 `dist` 目录下，右键选择"在集成终端中打开"：
-
-![open-in-powershell-webrwkv](./img/open-in-powershell-webrwkv.png)
-
-然后分别输入以下指令，进行不同量化程度的测试：
-
-#### 基础测试（无量化）
-
-运行以下命令进行基础性能测试：
+1. fp16 精度推理性能测试：
 
 ```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st"
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st"
+```
+2. INT8 量化推理性能测试：
+```bash
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st" --quant 31
+```
+3. NF4 量化推理性能测试
+```bash
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st" --quant-nf4 31
 ```
 
-#### INT8 量化测试
+>[!WARNING]
+> `--quant` 和 `--quant-nf4` 是量化层数，推荐保持默认值 `31`
 
-使用 INT8 量化可以减少内存使用并提升推理速度：
+**移动光标并选择您的推理设备（推荐使用默认的 `vulkan` 后端）**
 
-```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st" --quant 31
-```
+![web-rwkv-result](./img/web-rwkv-seclet-adapter.png)
 
-**参数说明：**
+测试完成后，终端将输出如下格式的性能报告：
 
-- `--quant`: 设置量化层数，数值越大量化程度越高
+| model                                                    | quant_int8 | quant_float4 |    test |            t/s |
+|----------------------------------------------------------|-----------:|-------------:|--------:|---------------:|
+| rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   pp512 |        1022.89 |
+| rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   tg128 |          95.98 |
 
-#### NF4 量化测试
+其中 **t/s** 表示推理速度（tokens/秒），请将从终端复制此表格，将其粘贴到新的 issue 中，并提供您的 **CPU 和 GPU 型号**。
 
-NF4 量化提供更激进的压缩选项：
+---
 
-```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st" --quant-nf4 31
-```
+## RWKV pip 
 
-### ⚠️ 注意事项：
+通过 Python 代码调用 [RWKV pip 仓库](https://pypi.org/project/rwkv/)进行推理，以测试性能数据。
 
-- **路径格式**: 命令中的模型路径必须保留引号
-- **量化限制**: 量化层数不能超过模型的实际层数
-- **文件路径**: 请根据实际的模型文件位置调整路径参数
+要基于 RWKV pip 测试，需要提前下载一个 `.pth` 格式的 RWKV7-G1 2.9B 模型：
 
+- [魔搭平台下载](https://modelscope.cn/models/RWKV/rwkv7-g1/resolve/master/rwkv7-g1-2.9b-20250519-ctx4096.pth)
+- [Hugging Face 下载](https://huggingface.co/BlinkDL/rwkv7-g1/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.pth?download=true)
 
-### 📊 测试结果解读
+### 准备测试环境
 
-测试完成后，您将看到包含以下信息的性能报告：
+>[!TIPS]
+> 推荐使用 [AnaConda](https://anaconda.org/anaconda/conda) 管理 Python 环境
 
-![web-rwkv-result](./img/web-rwkv-result.png)
-
-**结果说明：**
-
-- **t/s**: 表示推理速度（tokens/秒），数值越高性能越好
-- **其他列**: 包含模型基本信息，如模型名称、INT8 量化层数、NF4 量化层数以及测试内容
-
-这些数据将帮助您评估 RWKV 模型在不同量化设置下的性能表现，选择最适合您需求的配置。
-
-## 🐍 测试二：RWKVpip 交互式测试
-
-这种方法适合希望通过 Python 代码直接测试模型性能的用户。
-
-### 📋 环境准备
-
-#### 1. 打开终端
-
-在 `API_DEMO_CHAT.py` 文件的同级目录下，右键选择"在终端中打开"：
-
-![open-in-powershell](./img/open-in-powershell.png)
-
-#### 2. 安装依赖包
-
-运行以下命令安装必要的 Python 包：
+运行以下命令新建一个 conda 环境，安装必要的 Python 环境，然后克隆此仓库：
 
 ```bash
-# 安装 PyTorch (支持 CUDA 12.1)
-pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu121
-
-# 安装 RWKV 相关依赖
+conda create -n rwkv-pip-test python=3.12
+conda activate rwkv-pip-test
+pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu128
 pip install rwkv psutil prompt_toolkit tokenizers
+git clone https://github.com/ehooon/RWKV-Inference-Performance-Test.git
 ```
 
-### ⚙️ 配置与运行
+### 测试推理性能
 
-#### 3. 参数配置
-
-在 `API_DEMO_CHAT.py` 文件中需要调整以下关键参数：
+打开 `rwkv-pip-test.py` 文件，编辑中的关键参数：
 
 | 参数名称 | 功能描述 | 可选值 | 说明 |
 |---------|---------|--------|------|
-| `args.strategy` | 运行设备和精度 | `cuda fp16`<br>`cpu fp16`<br>`cuda fp32` | 推荐使用 `cuda fp16` 获得最佳性能 |
-| `args.MODEL_NAME` | 模型文件路径 | 模型文件的完整路径 | 仅需要输入模型名，不需要输入后缀，但此处需要 `.pth` 格式的模型 |
+| `args.strategy` | 运行设备和精度 | `cuda fp16`<br>`cpu fp16`<br>`cuda fp32` | 推荐使用 `cuda fp16`  |
+| `args.MODEL_NAME` | 模型文件路径 | 模型文件的完整路径 | 仅需要`.pth` 模型名称，不需要文件后缀 |
 
 **配置示例：**
 
 ```python
-args.strategy = 'cuda fp16'  # 使用 GPU 和半精度浮点
+args.strategy = 'cuda fp16'
 args.MODEL_NAME = '/path/to/your/rwkv-model'
 ```
 
-#### 4. 启动测试
-
-配置完成后，在终端中运行以下命令启动模型：
+配置完成后，在终端中运行以下命令启动测试脚本：
 
 ```bash
 python API_DEMO_CHAT.py
+``` 
+
+程序启动后，您可以通过交互式聊天界面与模型对话。每轮对话过后，终端会显示模型的响应速度和显存占用。
+
+```
+────────────────────────────────────────────────────────────
+[Current Generation]: 111 tokens | Time: 4.69s | Speed: 23.66 tokens/s
+[Total Statistics]: 582 tokens | Average Speed: 22.48 tokens/s
+[Current VRAM Usage]: 5.52GB/23.99GB (23.0%) | Cache: 5.75GB
+GPU cache cleared
+────────────────────────────────────────────────────────────
 ```
 
-程序启动后，您可以通过交互式聊天界面测试模型的响应速度和质量。
+请将从终端复制性能数据，将其粘贴到新的 issue 中，并提供您的 **CPU 和 GPU 型号**。
 
-### ⚠️ 注意事项
+>[!WARNING]
+> 请记录第二轮或第三轮对话的性能数据，以排除干扰。
 
-- **文件路径**: 请根据实际的模型文件位置调整路径参数
-- **GPU 支持**: 测试二需要 CUDA 支持以获得最佳性能
-- **模型格式**: 两种方法支持不同的模型格式（`.st` vs `.pth`）
+## llama.cpp
+
+> ⚠️ TBD 
 
 ## 🙏 致谢
 
 感谢以下开发者和项目为本指南提供的支持：
 
-- [@BlinkDL](https://github.com/BlinkDL) - RWKV 架构的创建者
+- [@BlinkDL](https://github.com/BlinkDL) - RWKV 架构作者
 - [@cryscan](https://github.com/cryscan) - [web-rwkv](https://github.com/cryscan/web-rwkv) 项目的开发者
-- [@shoumenchougou](https://github.com/shoumenchougou) - 提供了预训练模型的仓库
 
 特别感谢 RWKV 开源社区的所有贡献者，让这个优秀的语言模型架构得以不断发展和完善。
 
