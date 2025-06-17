@@ -1,178 +1,147 @@
-# RWKV Inference Performance Testing Guide
+<div align="center">
 
-**Language / 语言:** [🇨🇳 中文](./readme.md) | 🇺🇸 English
+<h1> RWKV Inference Performance Testing Guide </h1>
 
-This guide will help you quickly set up and test the inference performance of RWKV models, providing two different testing approaches.
+[![中文](https://img.shields.io/badge/Language-中文-orange.svg)](./README.md)
+[![English](https://img.shields.io/badge/Language-English-blue.svg)](./README_EN.md)
 
-## 📋 Table of Contents
+</div>
 
-- [Prerequisites](#prerequisites)
-- [Test 1: web-rwkv Performance Benchmark](#🔧-test-1-web-rwkv-performance-benchmark)
-  - [Installation Steps](#📦-installation-steps)
-  - [Performance Testing](#⚡-performance-testing)
-  - [Understanding Test Results](#📊-understanding-test-results)
-- [Test 2: RWKVpip Interactive Testing](#🐍-test-2-rwkvpip-interactive-testing)
-  - [Environment Setup](#📋-environment-setup)
-  - [Configuration and Execution](#⚙️-configuration-and-execution)
+This guide will help you configure and test RWKV model inference performance on your local device. We also welcome you to submit issues reporting RWKV inference performance data.
 
+We provide testing methods based on three different inference tools: [web-rwkv testing](#web-rwkv) | [RWKV pip testing](#rwkv-pip) | [llama.cpp testing](#llamacpp).
 
-## 🚀 Prerequisites
+|Testing Method|Required Model Format|Supported GPU Types|
+|---|---|---|
+|web-rwkv|`.st`|All GPUs supporting vulkan, including integrated graphics|
+|RWKV pip|`.pth`|NVIDIA GPUs supporting CUDA (CPU mode available but not recommended for testing)|
+|llama.cpp|`.gguf`|All types of GPUs, including integrated graphics and CPU|
 
-Before getting started, ensure that:
+Before starting, please ensure you have the following:
 
-- Your system has sufficient storage space for downloading model files
-- You have basic command-line operation skills
-- Python environment is installed (required for Test 2)
+- Sufficient storage space for downloading model files
+- Basic command line operation skills
+- Python environment installed (required for test method 2)
 
-## 🔧 Test 1: web-rwkv Performance Benchmark
+## web-rwkv
 
-### 📦 Installation Steps
+### Test Preparation
 
-#### 1. Download web-rwkv Tool
+1. Download web-rwkv tool: Visit [web-rwkv releases](https://github.com/cryscan/web-rwkv/releases) page, download the latest version suitable for your operating system, and extract it in an empty directory
+2. Get RWKV7-G1 2.9B model: [Click to download](https://huggingface.co/shoumenchougou/RWKV-ST-model/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.st?download=true) `rwkv7-g1-2.9b-20250519-ctx4096.st` RWKV model file for performance testing
+3. Move the downloaded model file to the `dist` folder in the web-rwkv extracted directory
 
-Visit the [web-rwkv releases](https://github.com/cryscan/web-rwkv/releases) page and download the latest version package suitable for your operating system.
+### Inference Performance Testing
 
-![web-rwkv-releases](./img/web-rwkv-releases.png)
+In the `web-rwkv/dist` directory, right-click and select "Open in Integrated Terminal". Then execute the following commands for testing different quantization precisions:
 
-After downloading, extract the package to your chosen directory.
-
-#### 2. Obtain RWKV Model
-
-Go to the [RWKV-ST-model](https://huggingface.co/shoumenchougou/RWKV-ST-model/tree/main) repository and download the required RWKV model files in `.st` format.
-
-![RWKV-ST-model](./img/RWKV-ST-model.png)
-
-#### 3. Configure Model Path
-
-Move the downloaded model files to the `dist` folder within the web-rwkv extracted directory:
-
-![move2path](./img/move2path.png)
-
-### ⚡ Performance Testing
-
-#### Open Terminal
-
-First, navigate to the `dist` directory of the extracted folder, right-click and select "Open in integrated terminal":
-
-![open-in-powershell-webrwkv](./img/open-in-powershell-webrwkv.png)
-
-Then enter the following commands to test different quantization levels:
-
-#### Basic Test (No Quantization)
-
-Run the following command for basic performance testing:
+1. fp16 precision inference performance test:
 
 ```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st"
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st"
+```
+2. INT8 quantization inference performance test:
+```bash
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st" --quant 31
+```
+3. NF4 quantization inference performance test:
+```bash
+./bench.exe --model "./rwkv7-g1-2.9b-20250519-ctx4096.st" --quant-nf4 31
 ```
 
-#### INT8 Quantization Test
+>[!WARNING]
+> `--quant` and `--quant-nf4` are quantization layers, recommended to keep the default value `31`
 
-Using INT8 quantization can reduce memory usage and improve inference speed:
+**Move the cursor and select your inference device (recommended to use the default `vulkan` backend)**
 
-```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st" --quant 31
-```
+![web-rwkv-result](./img/web-rwkv-seclet-adapter.png)
 
-**Parameter Description:**
+After testing, the terminal will output a performance report in the following format:
 
-- `--quant`: Sets the number of quantization layers, higher values mean more aggressive quantization
+| model                                                    | quant_int8 | quant_float4 |    test |            t/s |
+|----------------------------------------------------------|-----------:|-------------:|--------:|---------------:|
+| rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   pp512 |        1022.89 |
+| rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   tg128 |          95.98 |
 
-#### NF4 Quantization Test
+Where **t/s** represents inference speed (tokens/second). Please copy this table from the terminal, paste it into a new issue, and provide your **CPU and GPU model**.
 
-NF4 quantization provides more aggressive compression options:
+---
 
-```bash
-./bench.exe --model "path-to/rwkv7-g1-2.9b-20250519-ctx4096.st" --quant-nf4 31
-```
+## RWKV pip
 
-### ⚠️ Important Notes
+Test performance data by calling the [RWKV pip repository](https://pypi.org/project/rwkv/) through Python code for inference.
 
-- **Path Format**: Model paths in commands must retain quotation marks
-- **Quantization Limits**: Number of quantization layers cannot exceed the actual layers of the model
-- **File Paths**: Please adjust path parameters according to the actual model file location
+To test based on RWKV pip, you need to download a RWKV7-G1 2.9B model in `.pth` format first:
 
-### 📊 Understanding Test Results
+- [ModelScope Download](https://modelscope.cn/models/RWKV/rwkv7-g1/resolve/master/rwkv7-g1-2.9b-20250519-ctx4096.pth)
+- [Hugging Face Download](https://huggingface.co/BlinkDL/rwkv7-g1/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.pth?download=true)
 
-After testing is complete, you will see a performance report containing the following information:
+### Preparing Test Environment
 
-![web-rwkv-result](./img/web-rwkv-result.png)
+> [!TIP]
+> Recommended to use [AnaConda](https://anaconda.org/anaconda/conda) for Python environment management
 
-**Result Explanation:**
-
-- **t/s**: Represents inference speed (tokens/second), higher values indicate better performance
-- **Other columns**: Contains basic model information such as model name, INT8 quantization layers, NF4 quantization layers, and test content
-
-This data will help you evaluate the performance of RWKV models under different quantization settings and choose the configuration that best suits your needs.
-
-## 🐍 Test 2: RWKVpip Interactive Testing
-
-This method is suitable for users who want to test model performance directly through Python code.
-
-### 📋 Environment Setup
-
-#### 1. Open Terminal
-
-In the same directory as the `API_DEMO_CHAT.py` file, right-click and select "Open in terminal":
-
-![open-in-powershell](./img/open-in-powershell.png)
-
-#### 2. Install Dependencies
-
-Run the following commands to install necessary Python packages:
+Run the following commands to create a new conda environment, install necessary Python packages, and clone this repository:
 
 ```bash
-# Install PyTorch (supporting CUDA 12.1)
-pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu121
-
-# Install RWKV related dependencies
+conda create -n rwkv-pip-test python=3.12
+conda activate rwkv-pip-test
+pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu128
 pip install rwkv psutil prompt_toolkit tokenizers
+git clone https://github.com/ehooon/RWKV-Inference-Performance-Test.git
 ```
 
-### ⚙️ Configuration and Execution
+### Testing Inference Performance
 
-#### 3. Parameter Configuration
+Open `rwkv-pip-test.py` file and edit the key parameters:
 
-In the `API_DEMO_CHAT.py` file, you need to adjust the following key parameters:
-
-| Parameter Name | Function Description | Optional Values | Notes |
-|---------------|---------------------|-----------------|-------|
-| `args.strategy` | Runtime device and precision | `cuda fp16`<br>`cpu fp16`<br>`cuda fp32` | Recommended to use `cuda fp16` for best performance |
-| `args.MODEL_NAME` | Model file path | Complete path to model file | Only need to input model name without suffix, but requires `.pth` format model here |
+| Parameter Name | Function Description | Available Values | Notes |
+|---------|---------|--------|------|
+| `args.strategy` | Running device and precision | `cuda fp16`<br>`cpu fp16`<br>`cuda fp32` | Recommended to use `cuda fp16` |
+| `args.MODEL_NAME` | Model file path | Complete path to model file | Only needs `.pth` model name, without file extension |
 
 **Configuration Example:**
 
 ```python
-args.strategy = 'cuda fp16'  # Use GPU and half-precision floating point
+args.strategy = 'cuda fp16'
 args.MODEL_NAME = '/path/to/your/rwkv-model'
 ```
 
-#### 4. Start Testing
-
-After configuration, run the following command in the terminal to start the model:
+After configuration, run the following command in terminal to start the test script:
 
 ```bash
-python API_DEMO_CHAT.py
+python rwkv-pip-test.py
 ```
 
-Once the program starts, you can test the model's response speed and quality through the interactive chat interface.
+After program startup, you can interact with the model through an interactive chat interface. After each round of dialogue, the terminal will display the model's inference speed and VRAM usage. Such as
 
-### ⚠️ Important Notes
+```
+────────────────────────────────────────────────────────────
+[Current Generation]: 111 tokens | Time: 4.69s | Speed: 23.66 tokens/s
+[Total Statistics]: 582 tokens | Average Speed: 22.48 tokens/s
+[Current VRAM Usage]: 5.52GB/23.99GB (23.0%) | Cache: 5.75GB
+GPU cache cleared
+────────────────────────────────────────────────────────────
+```
 
-- **File Paths**: Please adjust path parameters according to the actual model file location
-- **GPU Support**: Test 2 requires CUDA support for optimal performance
-- **Model Formats**: The two methods support different model formats (`.st` vs `.pth`)
+Please copy the performance data from the terminal, paste it into a new issue, and provide your **CPU and GPU model**.
+
+>[!WARNING]
+> Please record the performance data from the second or third round of dialogue to eliminate interference.
+
+## llama.cpp
+
+> ⚠️ TBD
 
 ## 🙏 Acknowledgments
 
-Thanks to the following developers and projects for their support to this guide:
+Thanks to the following developers and projects for supporting this guide:
 
-- [@BlinkDL](https://github.com/BlinkDL) - Creator of the RWKV architecture
-- [@cryscan](https://github.com/cryscan) - Developer of the [web-rwkv](https://github.com/cryscan/web-rwkv) project
-- [@shoumenchougou](https://github.com/shoumenchougou) - Provider of the pre-trained model repository
+- [@BlinkDL](https://github.com/BlinkDL) - RWKV architecture author
+- [@cryscan](https://github.com/cryscan) - Developer of [web-rwkv](https://github.com/cryscan/web-rwkv) project
 
-Special thanks to all contributors in the RWKV open-source community for their continuous development and improvement of this excellent language model architecture.
+Special thanks to all contributors in the RWKV open source community for enabling this excellent language model architecture to continuously develop and improve.
 
 ---
 
-*This guide is continuously updated. If you have questions or suggestions, please feel free to submit an Issue or Pull Request.*
+*This guide is continuously being updated. If you have any questions or suggestions, please feel free to submit an Issue or Pull Request.*

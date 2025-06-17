@@ -79,7 +79,7 @@
 
 ### 准备测试环境
 
->[!TIPS]
+> [!TIP]
 > 推荐使用 [AnaConda](https://anaconda.org/anaconda/conda) 管理 Python 环境
 
 运行以下命令新建一个 conda 环境，安装必要的 Python 环境，然后克隆此仓库：
@@ -111,7 +111,7 @@ args.MODEL_NAME = '/path/to/your/rwkv-model'
 配置完成后，在终端中运行以下命令启动测试脚本：
 
 ```bash
-python API_DEMO_CHAT.py
+python rwkv-pip-test.py
 ``` 
 
 程序启动后，您可以通过交互式聊天界面与模型对话。每轮对话过后，终端会显示模型的响应速度和显存占用。
