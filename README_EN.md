@@ -7,9 +7,15 @@
 
 </div>
 
-This guide will help you configure and test RWKV model inference performance on your local device. We also welcome you to submit issues reporting RWKV inference performance data.
+This guide will help you configure and test the inference performance of the RWKV model on your local device.  
+We invite you to [submit issues](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues) to share your RWKV inference performance results.
 
-We provide testing methods based on three different inference tools: [web-rwkv testing](#web-rwkv) | [RWKV pip testing](#rwkv-pip) | [llama.cpp testing](#llamacpp).
+> [!NOTE]
+> To maintain consistency, we only accept performance test data based on the **RWKV7-G1 2.9B** model as the benchmark, but various quantization types such as FP16, Q8/INT8, and Q4/INF4 are allowed.
+
+## Introduction to Test Methods
+
+We provide testing methods based on three different inference tools: [web-rwkv testing](#web-rwkv-testing) | [RWKV pip testing](#rwkv-pip-testing) | [llama.cpp testing](#llamacpp-testing).
 
 |Testing Method|Required Model Format|Supported GPU Types|
 |---|---|---|
@@ -21,9 +27,9 @@ Before starting, please ensure you have the following:
 
 - Sufficient storage space for downloading model files
 - Basic command line operation skills
-- Python environment installed (required for test method 2)
+- Python environment installed (required for RWKV pip testing)
 
-## web-rwkv
+## web-rwkv testing
 
 ### Test Preparation
 
@@ -58,16 +64,18 @@ In the `web-rwkv/dist` directory, right-click and select "Open in Integrated Ter
 
 After testing, the terminal will output a performance report in the following format:
 
+```
 | model                                                    | quant_int8 | quant_float4 |    test |            t/s |
 |----------------------------------------------------------|-----------:|-------------:|--------:|---------------:|
 | rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   pp512 |        1022.89 |
 | rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   tg128 |          95.98 |
+```
 
-Where **t/s** represents inference speed (tokens/second). Please copy this table from the terminal, paste it into a new issue, and provide your **CPU and GPU model**.
+Where **t/s** represents inference speed (tokens/second). Please copy this performance table from the terminal, paste it into a [new web-rwkv-performance-report issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=web-rwkv-performance-report.md), and provide your **CPU and GPU model**.
 
 ---
 
-## RWKV pip
+## RWKV pip testing
 
 Test performance data by calling the [RWKV pip repository](https://pypi.org/project/rwkv/) through Python code for inference.
 
@@ -124,14 +132,60 @@ GPU cache cleared
 ────────────────────────────────────────────────────────────
 ```
 
-Please copy the performance data from the terminal, paste it into a new issue, and provide your **CPU and GPU model**.
+Please copy the performance data from the terminal, paste it into a [new RWKV pip performance-report issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=rwkv-pip-performance-report.md), and provide your **CPU and GPU model**.
 
 >[!WARNING]
 > Please record the performance data from the second or third round of dialogue to eliminate interference.
 
-## llama.cpp
+## llama.cpp testing
 
-> ⚠️ TBD
+Use llama.cpp's `llama-bench` to test performance. You need to download RWKV models in `.gguf` format in advance:
+
+- ModelScope download: [rwkv7-2.9B-g1-F16.gguf](https://modelscope.cn/models/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/master/rwkv7-2.9B-g1-F16.gguf) | [rwkv7-2.9B-g1-Q8_0.gguf](https://modelscope.cn/models/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/master/rwkv7-2.9B-g1-Q8_0.gguf)
+- Hugging Face download: [rwkv7-2.9B-g1-F16.gguf](https://huggingface.co/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/main/rwkv7-2.9B-g1-F16.gguf?download=true) | [rwkv7-2.9B-g1-Q8_0.gguf](https://huggingface.co/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/main/rwkv7-2.9B-g1-Q8_0.gguf?download=true)
+
+### Download or Build llama.cpp
+
+You can choose to download pre-compiled llama.cpp programs from the [llama.cpp releases page](https://github.com/ggml-org/llama.cpp/releases).
+
+llama.cpp provides various pre-compiled versions. Choose the appropriate version based on your operating system and graphics card type:
+
+| System Type | GPU Type | Package Name Field |
+|-------------|----------|-------------------|
+| macOS | Apple Silicon | macos-arm64.zip |
+| Windows | Intel GPU (including Arc discrete/Xe integrated) | win-sycl-x64.zip |
+| Windows | NVIDIA GPU (CUDA 11.7-12.3) | win-cuda-cu11.7-x64.zip |
+| Windows | NVIDIA GPU (CUDA 12.4+) | win-cuda-cu12.4-x64.zip |
+| Windows | AMD and other GPUs (including AMD integrated) | win-vulkan-x64.zip |
+| Windows | No GPU | win-openblas-x64.zip |
+
+For Linux systems and other unlisted system and hardware combinations, it's recommended to refer to the [llama.cpp build documentation](https://github.com/ggerganov/llama.cpp/blob/master/docs/build.md) and choose the appropriate method for local compilation and building.
+
+### Inference Performance Testing
+
+Start a terminal and navigate to the llama.cpp directory, then use the following command `llama-bench` to run the performance test script:
+
+```
+./build/bin/llama-bench -m /path/to/your/models/rwkv7-g1-2.9b.gguf 
+```
+
+You will see output like this in the terminal:
+
+```
+ggml_cuda_init: GGML_CUDA_FORCE_MMQ:    no
+ggml_cuda_init: GGML_CUDA_FORCE_CUBLAS: no
+ggml_cuda_init: found 2 CUDA devices:
+  Device 0: NVIDIA GeForce RTX 5090, compute capability 12.0, VMM: yes
+  Device 1: NVIDIA GeForce RTX 5090, compute capability 12.0, VMM: yes
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| rwkv7 2.9B F16                 |   5.52 GiB |     2.95 B | CUDA       |  99 |           pp512 |     12004.34 ± 21.47 |
+| rwkv7 2.9B F16                 |   5.52 GiB |     2.95 B | CUDA       |  99 |           tg128 |         83.01 ± 1.54 |
+
+build: d17a809e (5600)
+```
+
+Please copy this performance data from the terminal, paste it into a [new llama.cpp performance report issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=llama-cpp-performance-report.md), and provide your **CPU model**.
 
 ## 🙏 Acknowledgments
 

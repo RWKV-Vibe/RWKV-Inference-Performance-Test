@@ -7,9 +7,14 @@
 
 </div>
 
-本指南将帮助您在本地设备上配置并测试 RWKV 模型的推理性能，我们也欢迎您提交 issue 报告 RWKV 推理性能数据。
+本指南将帮助您在本地设备上配置并测试 RWKV 模型的推理性能，我们也欢迎您[提交 issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues) 报告 RWKV 模型在您设备上的推理性能数据。
 
-我们提供了基于三种不同推理工具的测试方法：[web-rwkv 测试](#web-rwkv) | [RWKV pip 测试](#rwkv-pip) | [llama.cpp 测试](#llamacpp)。
+> [!NOTE]
+> 为确保数据一致性，我们仅接受基于 **RWKV7-G1 2.9B** 模型的性能测试数据，但支持不同的量化类型，如 FP16、Q8/INT8、Q4/INF4 等。
+
+## 测试方法介绍
+
+我们提供了基于三种不同推理工具的测试方法：[web-rwkv 测试](#web-rwkv-测试) | [RWKV pip 测试](#rwkv-pip-测试) | [llama.cpp 测试](#llamacpp-测试)。
 
 |测试方法|需要的模型格式|支持的显卡类型|
 |---|---|---|
@@ -17,14 +22,13 @@
 |RWKV pip|`.pth`|支持 CUDA 的 NVIDIA 显卡，虽然有 CPU 模式，但不建议测试|
 |llama.cpp|`.gguf` | 所有类型的显卡，包括核显和 CPU |
 
-
 在开始之前，请确保您具备以下条件：
 
 - 系统具备足够的存储空间用于下载模型文件
 - 具备基本的命令行操作能力
-- 已安装 Python 环境（测试二需要）
+- 已安装 Python 环境（RWKV pip 测试需要）
 
-## web-rwkv
+## web-rwkv 测试
 
 ### 测试准备
 
@@ -59,16 +63,18 @@
 
 测试完成后，终端将输出如下格式的性能报告：
 
+```
 | model                                                    | quant_int8 | quant_float4 |    test |            t/s |
 |----------------------------------------------------------|-----------:|-------------:|--------:|---------------:|
 | rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   pp512 |        1022.89 |
 | rwkv7-g1-2.9b-20250519-ctx4096.st                        |          0 |            0 |   tg128 |          95.98 |
+```
 
-其中 **t/s** 表示推理速度（tokens/秒），请将从终端复制此表格，将其粘贴到新的 issue 中，并提供您的 **CPU 和 GPU 型号**。
+请将从终端复制此表格，将其粘贴到[新的 web-rwkv 性能报告 issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=web-rwkv-performance-report.md) 中，并提供您的 **CPU 和 GPU 型号**。
 
 ---
 
-## RWKV pip 
+## RWKV pip 测试
 
 通过 Python 代码调用 [RWKV pip 仓库](https://pypi.org/project/rwkv/)进行推理，以测试性能数据。
 
@@ -125,21 +131,68 @@ GPU cache cleared
 ────────────────────────────────────────────────────────────
 ```
 
-请将从终端复制性能数据，将其粘贴到新的 issue 中，并提供您的 **CPU 和 GPU 型号**。
+请将从终端复制性能数据，将其粘贴到[新的 RWKV pip 性能报告 issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=rwkv-pip-performance-report.md) 中，并提供您的 **CPU 和 GPU 型号**。
 
 >[!WARNING]
 > 请记录第二轮或第三轮对话的性能数据，以排除干扰。
 
-## llama.cpp
+## llama.cpp 测试
 
-> ⚠️ TBD 
+使用 llama.cpp 的 `llama-bench` 测试性能。需要下载提前下载 `.gguf` 格式的 RWKV 模型：
+
+- 魔搭平台下载：下载：[rwkv7-2.9B-g1-F16.gguf](https://modelscope.cn/models/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/master/rwkv7-2.9B-g1-F16.gguf) | [rwkv7-2.9B-g1-Q8_0.gguf](https://modelscope.cn/models/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/master/rwkv7-2.9B-g1-Q8_0.gguf)
+- Hugging Face 下载：[rwkv7-2.9B-g1-F16.gguf](https://huggingface.co/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/main/rwkv7-2.9B-g1-F16.gguf?download=true) | [rwkv7-2.9B-g1-Q8_0.gguf](https://huggingface.co/zhiyuan8/RWKV-v7-2.9B-G1-GGUF/resolve/main/rwkv7-2.9B-g1-Q8_0.gguf?download=true)
+
+### 下载或编译 llama.cpp 
+
+可以选择从 [llama.cpp 的 release 页面](https://github.com/ggml-org/llama.cpp/releases)下载预编译的 llama.cpp 程序。
+
+llama.cpp 提供了多种预编译版本，根据你的操作系统和显卡类型选择合适的版本：
+
+| 系统类型 | GPU 类型 | 包名称字段 |
+|----------|----------|------------|
+| macOS | 苹果芯片 | macos-arm64.zip |
+| Windows | 英特尔 GPU（含 Arc 独显/Xe 核显） | win-sycl-x64.zip |
+| Windows | 英伟达 GPU（CUDA 11.7-12.3） | win-cuda-cu11.7-x64.zip |
+| Windows | 英伟达 GPU（CUDA 12.4+） | win-cuda-cu12.4-x64.zip |
+| Windows | AMD 和其他 GPU（含 AMD 核显） | win-vulkan-x64.zip |
+| Windows | 无 GPU | win-openblas-x64.zip |
+
+Linux 系统和其他未列出的系统与硬件组合，建议参照 [llama.cpp 官方构建文档](https://github.com/ggerganov/llama.cpp/blob/master/docs/build.md)，选择适合的方法本地编译构建。
+
+### 推理性能测试
+
+启动终端并导航到 llama.cpp 目录，使用以下命令 `llama.bench` 运行性能测试脚本：
+
+```
+./build/bin/llama-bench -m /pth/to/your/models/rwkv7-g1-2.9b.gguf 
+```
+
+您将在终端看到如下输入：
+
+```
+ggml_cuda_init: GGML_CUDA_FORCE_MMQ:    no
+ggml_cuda_init: GGML_CUDA_FORCE_CUBLAS: no
+ggml_cuda_init: found 2 CUDA devices:
+  Device 0: NVIDIA GeForce RTX 5090, compute capability 12.0, VMM: yes
+  Device 1: NVIDIA GeForce RTX 5090, compute capability 12.0, VMM: yes
+| model                          |       size |     params | backend    | ngl |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
+| rwkv7 2.9B F16                 |   5.52 GiB |     2.95 B | CUDA       |  99 |           pp512 |     12004.34 ± 21.47 |
+| rwkv7 2.9B F16                 |   5.52 GiB |     2.95 B | CUDA       |  99 |           tg128 |         83.01 ± 1.54 |
+
+build: d17a809e (5600)
+```
+
+请将从终端复制此性能数据，将其粘贴到[新的 llama.cpp 性能报告 issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=llama-cpp-performance-report.md) 中，并提供您的 **CPU 型号**。
 
 ## 🙏 致谢
 
 感谢以下开发者和项目为本指南提供的支持：
 
-- [@BlinkDL](https://github.com/BlinkDL) - RWKV 架构作者
-- [@cryscan](https://github.com/cryscan) - [web-rwkv](https://github.com/cryscan/web-rwkv) 项目的开发者
+- [@BlinkDL](https://github.com/BlinkDL) - [RWKV-LM](https://github.com/BlinkDL/RWKV-LM) 作者
+- [@cryscan](https://github.com/cryscan) - [web-rwkv](https://github.com/cryscan/web-rwkv) 项目作者
+- [llama.cpp](https://github.com/ggml-org/llama.cpp) 项目
 
 特别感谢 RWKV 开源社区的所有贡献者，让这个优秀的语言模型架构得以不断发展和完善。
 
