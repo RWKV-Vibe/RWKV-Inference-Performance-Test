@@ -1,0 +1,21 @@
+blank_issues_enabled:true
+contact_links: []
+
+issue_templates:
+  - name: web-rwkv performance report
+    description: Share your web-rwkv performance results
+    title: "[web-rwkv report] "
+    labels: ["performance", "web-rwkv"]
+    file: web-rwkv-performance-report.md
+
+  - name: RWKV pip performance report
+    description: Share your RWKV pip performance results
+    title: "[rwkv-pip report] "
+    labels: ["performance", "rwkv-pip"]
+    file: rwkv-pip-performance-report.md
+
+  - name: llama.cpp performance report
+    description: Share your llama.cpp performance results
+    title: "[llama.cpp report] "
+    labels: ["performance", "llama.cpp"]
+    file: llama-cpp-performance-report.md
