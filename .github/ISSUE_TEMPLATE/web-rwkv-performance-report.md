@@ -6,7 +6,7 @@ labels: ["performance", " web-rwkv"]
 assignees: []
 ---
 
-## 🧠 CPU model
+## 💾 CPU model
 <!-- e.g.: AMD Ryzen 9 7950X -->
 
 ## 🎮 GPU model
@@ -17,5 +17,9 @@ assignees: []
 Paste the performance information from the web-rwkv bench.exe output here
 -->
 
-## 🛠️ System information
+## 🛠️ System information [optional]
 <!-- OS version, driver version, CUDA version, etc. -->
+
+## 🖥 Screenshot [optional]
+
+<!-- Paste the screenshot of your testing here -->

@@ -6,7 +6,7 @@ labels: ["performance", "rwkv-pip"]
 assignees: []
 ---
 
-## 🧠 CPU model
+## 💾 CPU model
 <!-- e.g.: Intel i9-14900K -->
 
 ## 🎮 GPU model
@@ -17,5 +17,9 @@ assignees: []
 Paste the performance information output by rwkv-pip-test.py here
 -->
 
-## 🛠️ System information
+## 🛠️ System information [optional]
 <!-- OS version, driver version, CUDA version, etc. -->
+
+## 🖥 Screenshot [optional]
+
+<!-- Paste the screenshot of your testing here -->

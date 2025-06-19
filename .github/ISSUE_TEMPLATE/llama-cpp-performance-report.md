@@ -6,7 +6,7 @@ labels: ["performance", "llama.cpp"]
 assignees: []
 ---
 
-## 🧠 CPU model
+## 💾 CPU model
 <!-- e.g.: AMD EPYC 9654 -->
 
 ## 🎮 GPU model
@@ -17,5 +17,9 @@ assignees: []
 Paste the performance information from the llama-bench output here
 -->
 
-## 🛠️ System information
+## 🛠️ System information [optional]
 <!-- OS version, driver version, CUDA version, etc. -->
+
+## 🖥 Screenshot [optional]
+
+<!-- Paste the screenshot of your testing here -->
