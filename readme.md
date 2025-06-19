@@ -88,11 +88,16 @@
 > [!TIP]
 > 推荐使用 [AnaConda](https://anaconda.org/anaconda/conda) 管理 Python 环境
 
-运行以下命令新建一个 conda 环境，安装必要的 Python 环境，然后克隆此仓库：
+运行以下命令新建一个 conda 环境（如果您不希望使用 Conda，请跳过此步骤）：
 
 ```bash
 conda create -n rwkv-pip-test python=3.12
 conda activate rwkv-pip-test
+```
+
+安装必要的 Python 环境（请确保已正确安装 [Python](https://www.python.org/)），然后克隆此仓库：
+
+```
 pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu128
 pip install rwkv psutil prompt_toolkit tokenizers
 git clone https://github.com/ehooon/RWKV-Inference-Performance-Test.git
@@ -100,7 +105,7 @@ git clone https://github.com/ehooon/RWKV-Inference-Performance-Test.git
 
 ### 测试推理性能
 
-打开 `rwkv-pip-test.py` 文件，编辑中的关键参数：
+打开 `rwkv-pip-test.py` 文件，编辑关键参数：
 
 | 参数名称 | 功能描述 | 可选值 | 说明 |
 |---------|---------|--------|------|
@@ -114,7 +119,7 @@ args.strategy = 'cuda fp16'
 args.MODEL_NAME = '/path/to/your/rwkv-model'
 ```
 
-配置完成后，在终端中运行以下命令启动测试脚本：
+配置完成后，在终端中进入 `RUN-RWKV` 目录，运行以下命令以启动测试脚本：
 
 ```bash
 python rwkv-pip-test.py
@@ -134,7 +139,7 @@ GPU cache cleared
 请将从终端复制性能数据，将其粘贴到[新的 RWKV pip 性能报告 issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=rwkv-pip-performance-report.md) 中，并提供您的 **CPU 和 GPU 型号**。
 
 >[!WARNING]
-> 请记录第二轮或第三轮对话的性能数据，以排除干扰。
+> **请记录第三轮或之后对话的推理性能数据，以排除干扰。** 推荐的测试 prompt：Tell me a story about Mars.
 
 ## llama.cpp 测试
 

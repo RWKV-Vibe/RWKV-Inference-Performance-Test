@@ -89,11 +89,15 @@ To test based on RWKV pip, you need to download a RWKV7-G1 2.9B model in `.pth` 
 > [!TIP]
 > Recommended to use [AnaConda](https://anaconda.org/anaconda/conda) for Python environment management
 
-Run the following commands to create a new conda environment, install necessary Python packages, and clone this repository:
+Run the following command to create a new conda environment (skip this step if you do not wish to use Conda):
 
 ```bash
 conda create -n rwkv-pip-test python=3.12
 conda activate rwkv-pip-test
+```
+
+Install the necessary Python packages (make sure [Python](https://www.python.org/) is properly installed), and clone this repository:
+```bash
 pip install torch --upgrade --extra-index-url https://download.pytorch.org/whl/cu128
 pip install rwkv psutil prompt_toolkit tokenizers
 git clone https://github.com/ehooon/RWKV-Inference-Performance-Test.git
@@ -115,7 +119,7 @@ args.strategy = 'cuda fp16'
 args.MODEL_NAME = '/path/to/your/rwkv-model'
 ```
 
-After configuration, run the following command in terminal to start the test script:
+After configuration, switch to `RUN-RWKV`, run the following command in terminal to start the test script:
 
 ```bash
 python rwkv-pip-test.py
@@ -135,7 +139,7 @@ GPU cache cleared
 Please copy the performance data from the terminal, paste it into a [new RWKV pip performance-report issue](https://github.com/RWKV-Vibe/RWKV-Inference-Performance-Test/issues/new?template=rwkv-pip-performance-report.md), and provide your **CPU and GPU model**.
 
 >[!WARNING]
-> Please record the performance data from the second or third round of dialogue to eliminate interference.
+> **Please record performance data for the third or later conversations to eliminate interference.** Recommended test prompt: Tell me a story about Mars.
 
 ## llama.cpp testing
 
