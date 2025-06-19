@@ -1,16 +1,14 @@
-import os, copy, types, gc, sys, re
+import os, copy, types, gc, sys, re, platform, psutil, time
 import numpy as np
 from prompt_toolkit import prompt
 import torch
-import time
-import psutil
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
 os.environ["RWKV_V7_ON"] = "1"  # enable this for rwkv-7 models
 os.environ["RWKV_JIT_ON"] = "1"
-os.environ["RWKV_CUDA_ON"] = "1"  # !!! '1' to compile CUDA kernel (10x faster), requires c++ compiler & cuda libraries !!!
+os.environ["RWKV_CUDA_ON"] = "0"  # !!! '1' to compile CUDA kernel (will be faster), requires c++ compiler & cuda libraries !!!
 
 from rwkv.model import RWKV
 from rwkv.utils import PIPELINE
@@ -19,7 +17,7 @@ from rwkv.utils import PIPELINE
 
 args = types.SimpleNamespace()
 args.strategy = "cuda fp16"  # use CUDA, fp16
-args.MODEL_NAME = "/home/rwkv/Example/models/rwkv7-g1-2.9b-20250519-ctx4096"
+args.MODEL_NAME = "C:/models/rwkv7-g1-2.9b-20250519-ctx4096"
 
 # Add monitoring functions
 def get_memory_usage():
@@ -48,16 +46,14 @@ def print_memory_usage(prefix=""):
     else:
         print(f"{prefix}No GPU detected")
 
+print("=== System information ===")
+print(f"Platform: {platform.platform()}")
+print(f"Python Version: {sys.version}")
+print(f"PyTorch Version: {torch.__version__}")
 print("\n")
-print_memory_usage("Before Loading ")
 
 ########################################################################################################
-STATE_NAME = None  # use vanilla zero initial state?
-
-# use custom state? much better chat results (download from https://huggingface.co/BlinkDL/temp-latest-training-models/tree/main)
-# note: this is English Single-round QA state (will forget what you previously say)
-# STATE_NAME = "E://RWKV-Runner//models//rwkv-x060-eng_single_round_qa-1B6-20240516-ctx2048"
-
+STATE_NAME = None
 ########################################################################################################
 
 GEN_TEMP = 1.0
@@ -75,12 +71,13 @@ CHUNK_LEN = 256  # split input into chunks to save VRAM (shorter -> slower, but 
 
 ########################################################################################################
 
-print(f"Loading model - {args.MODEL_NAME}")
+# print(f"Loading model - {args.MODEL_NAME}")
 model = RWKV(model=args.MODEL_NAME, strategy=args.strategy)
 pipeline = PIPELINE(model, "rwkv_vocab_v20230424")
 
-print("\n")
+
 print_memory_usage("After Loading ")
+print("─" * 70)
 
 model_tokens = []
 model_state = None
@@ -118,7 +115,7 @@ if STATE_NAME == None:  # use initial prompt if we are not loading a state
     print(init_ctx, end="")
 
 # Add performance statistics variables
-total_tokens_generated = 0
+total_tokens_generated = 0  # Only tokens counted for TPS (excluding first tokens)
 total_inference_time = 0
 
 while True:
@@ -129,8 +126,10 @@ while True:
     if len(msg) > 0:
         # Start timing
         start_time = time.time()
-        generation_start_time = time.time()
         tokens_this_round = 0
+        actual_tokens_for_tps = 0  # Tokens counted for TPS (excluding first token)
+        first_token_processed = False
+        generation_start_time = None
         
         occurrence = {}
         out_tokens = []
@@ -138,9 +137,6 @@ while True:
 
         out = run_rnn("User: " + msg + "\n\nAssistant:")
         print("\nAssistant:", end="")
-
-        # Record generation start time
-        generation_start_time = time.time()
 
         for i in range(99999):
             for n in occurrence:
@@ -152,6 +148,13 @@ while True:
             model_tokens += [token]
             out_tokens += [token]
             tokens_this_round += 1
+
+            # Start timing from the second token (after first token initialization)
+            if not first_token_processed:
+                first_token_processed = True
+                generation_start_time = time.time()  # Reset timing after first token
+            else:
+                actual_tokens_for_tps += 1  # Only count tokens after the first one
 
             for xxx in occurrence:
                 occurrence[xxx] *= GEN_penalty_decay
@@ -169,26 +172,30 @@ while True:
         # Calculate performance metrics
         end_time = time.time()
         total_time = end_time - start_time
-        generation_time = end_time - generation_start_time
         
-        # Update total statistics
-        total_tokens_generated += tokens_this_round
+        if generation_start_time is not None:
+            generation_time = end_time - generation_start_time  # Time from second token onwards
+        else:
+            generation_time = 0
+        
+        # Update total statistics (using actual tokens for TPS calculation)
+        total_tokens_generated += actual_tokens_for_tps
         total_inference_time += generation_time
         
-        # Calculate speed
-        current_speed = tokens_this_round / generation_time if generation_time > 0 else 0
+        # Calculate speed (excluding first token initialization time)
+        current_speed = actual_tokens_for_tps / generation_time if generation_time > 0 and actual_tokens_for_tps > 0 else 0
         average_speed = total_tokens_generated / total_inference_time if total_inference_time > 0 else 0
 
-        print(f"\n" + "─" * 60)
-        print(f"[Current Generation]: {tokens_this_round} tokens | Time: {generation_time:.2f}s | Speed: {current_speed:.2f} tokens/s")
+        print("─" * 70)
+        print(f"[Current Generation]: {actual_tokens_for_tps} for TPS | Time: {generation_time:.2f}s | Speed: {current_speed:.2f} tokens/s")
         print(f"[Total Statistics]: {total_tokens_generated} tokens | Average Speed: {average_speed:.2f} tokens/s")
         print_memory_usage("Current ")
         
         # Optional: Clear GPU cache
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            print("GPU cache cleared")
-        print("─" * 60)
+            # print("GPU cache cleared")
+        print(f"{'─' * 70}\n")
 
     else:
-        print("!!! Error: please say something !!!") 
+        print("!!! Error: please say something !!!")
