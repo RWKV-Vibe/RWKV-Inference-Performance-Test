@@ -33,7 +33,7 @@
 ### 测试准备
 
 1. 下载 web-rwkv 工具：访问 [web-rwkv releases](https://github.com/cryscan/web-rwkv/releases) 页面，下载适合您操作系统的最新版本压缩包，在一个空白目录中解压
-2. 获取 RWKV7-G1 2.9B 模型：[点击下载](https://huggingface.co/shoumenchougou/RWKV-ST-model/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.st?download=true) `rwkv7-g1-2.9b-20250519-ctx4096.st` RWKV 模型文件，用于性能测试
+2. 获取 RWKV7-G1 2.9B 模型：[从 Hugging Face 下载](https://huggingface.co/shoumenchougou/RWKV-ST-model/resolve/main/rwkv7-g1-2.9b-20250519-ctx4096.st?download=true) 或者 [从 ModelScope 下载](https://modelscope.cn/models/shoumenchougou/RWKV-7-World-ST/resolve/master/rwkv7-g1-2.9b-20250519-ctx4096.st)`rwkv7-g1-2.9b-20250519-ctx4096.st` RWKV 模型文件，用于性能测试
 3. 将下载的模型文件移动到 web-rwkv 解压目录下的 `dist` 文件夹中
 
 ### 推理性能测试
